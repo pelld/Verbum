@@ -1,0 +1,61 @@
+name: Apply English definitions
+on:
+  push:
+    paths: ['.github/workflows/english-definitions.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch French and Spanish definitions
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+          p=Path('index.html'); s=p.read_text()
+          defs={
+          'enjeu':'Something important that may be gained, lost, affected or decided in a situation.',
+          'pourtant':'Used to introduce a contrast: despite what has just been said; however or yet.',
+          'parvenir':'To succeed in reaching a goal or managing to do something, often after effort.',
+          'bouleverser':'To disrupt or transform something profoundly, or to affect someone very strongly emotionally.',
+          'démarche':'An approach, process or set of steps taken in order to achieve something.',
+          'davantage':'To a greater extent or in a greater quantity; more.',
+          'voire':'Used to add a stronger or more surprising possibility: even, or indeed.',
+          'néanmoins':'Despite what has just been said; nevertheless or nonetheless.',
+          's’avérer':'To turn out or prove to be a particular way after experience or examination.',
+          'à l’égard de':'Towards, concerning, or with regard to a person, group or thing.',
+          'aboutir':'To reach a result or successful conclusion after a process or effort.',
+          'susciter':'To cause or prompt a reaction, feeling, question or interest.',
+          'évoquer':'To mention a subject, or to call something to mind.',
+          'd’autant plus':'Used to say that something is even more true or important because of an additional reason.',
+          'faute de':'Because something is lacking or unavailable; for lack of.',
+          'plantear':'To raise, propose, frame or put forward a question, problem or possibility for consideration.',
+          'lograr':'To succeed in achieving or obtaining something, usually after effort.',
+          'sin embargo':'Used to introduce a contrast or limitation: however or nevertheless.',
+          'ámbito':'A field, sphere, area or context in which an activity or situation exists.',
+          'llevar a cabo':'To carry out, perform or complete an action, plan or project.',
+          'hallazgo':'A finding or discovery, especially one produced by research or observation.',
+          'abordar':'To address, tackle or deal with a subject or problem.',
+          'fomentar':'To encourage, promote or foster an activity, attitude or development.',
+          'sesgo':'A systematic bias or tendency that can distort a judgement, sample or result.',
+          'desempeñar':'To perform a role, function, job or task.',
+          'respaldar':'To support, endorse or provide evidence for a person, decision or claim.',
+          'carecer de':'To lack or be without something that is needed or expected.',
+          'conllevar':'To entail, involve or bring something as a consequence, often a cost or difficulty.',
+          'matizar':'To qualify or add nuance to a statement so that it is less absolute or more precise.',
+          'poner de manifiesto':'To make something clear or evident; to reveal or highlight it.'}
+          for word,d in defs.items():
+              # Current compact array schema: [word, pronunciation, definition, translation, example]
+              pat=r"(\['"+re.escape(word)+r"','[^']*',)'[^']*'"
+              s,n=re.subn(pat,lambda m:m.group(1)+repr(d),s,count=1)
+              if n!=1: print('Not found:',word)
+          p.write_text(s)
+      - name: Commit
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add index.html
+          git diff --cached --quiet || git commit -m 'Make definitions English [skip ci]'
+          git push
